@@ -153,7 +153,7 @@ function getVideoUrl({
 for await (const video of getVideos({ pageSize: 10 })) {
   try {
     const url = await getVideoUrl({ guid: video.Guid });
-    await $`ffmpeg -i ${url} -codec copy "${directory}/${video.Name} ${
+    await $`ffmpeg -n -i ${url} -codec copy "${directory}/${video.Name} ${
       video.Author ? `(${video.Author})` : ""
     } - ${video.Guid}.mp4"`;
   } catch (_) {
