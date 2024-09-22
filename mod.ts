@@ -28,6 +28,9 @@ const directory =
   );
 mkdir(directory, { recursive: true });
 
+const startingGuid = args.get("--start-with");
+const reverse = args.has("--reverse");
+
 interface VideoItem {
   Guid: string;
   Name: string;
@@ -150,7 +153,15 @@ function getVideoUrl({
   });
 }
 
-for await (const video of getVideos({ pageSize: 10 })) {
+const videos = !reverse
+  ? getVideos({ pageSize: 10 })
+  : (await Array.fromAsync(getVideos({ pageSize: 10 }))).reverse();
+
+let skip = startingGuid !== undefined;
+for await (const video of videos) {
+  if (video.Guid === startingGuid) skip = false;
+  if (skip) continue;
+
   try {
     const url = await getVideoUrl({ guid: video.Guid });
     await $`ffmpeg -n -i ${url} -codec copy "${directory}/${video.Name} ${
