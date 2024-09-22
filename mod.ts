@@ -30,6 +30,7 @@ mkdir(directory, { recursive: true });
 
 const startingGuid = args.get("--start-with");
 const reverse = args.has("--reverse");
+const guids = args.get("--guids");
 
 interface VideoItem {
   Guid: string;
@@ -157,10 +158,15 @@ const videos = !reverse
   ? getVideos({ pageSize: 10 })
   : (await Array.fromAsync(getVideos({ pageSize: 10 }))).reverse();
 
+const allowlist = guids
+  ? new Set((await Bun.file(guids).text()).split("\n"))
+  : undefined;
+
 let skip = startingGuid !== undefined;
 for await (const video of videos) {
   if (video.Guid === startingGuid) skip = false;
   if (skip) continue;
+  if (allowlist && !allowlist.has(video.Guid)) continue;
 
   try {
     const url = await getVideoUrl({ guid: video.Guid });
